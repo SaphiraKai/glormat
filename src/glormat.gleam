@@ -65,7 +65,7 @@ pub fn debug(
 ///
 /// ```gleam
 /// let assert Ok("hello world, how are you?") =
-///   "hello {object}"
+///   "hello {object}, {question}?"
 ///   |> replace("object", with: "world")
 ///   |> then("question", with: "how are you")
 /// ```
