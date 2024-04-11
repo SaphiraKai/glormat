@@ -7,10 +7,16 @@
 gleam add glormat
 ```
 ```gleam
-import glormat
+import gleam/io
+import glormat.{assert_ok, replace, then, then_debug}
 
 pub fn main() {
-  // TODO: An example of the project in use
+  "hello {object}, the {operation} is {result}"
+    |> replace("object", with: "world")
+    |> then("operation", with: "sum")
+    |> then_debug("result", with: 1 + 2)
+    |> assert_ok
+    |> io.println // hello world, the sum is 3
 }
 ```
 
