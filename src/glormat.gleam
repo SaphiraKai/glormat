@@ -50,7 +50,7 @@ pub fn replace(
 
 /// A wrapper for `format` that calls `string.inspect` on `data` before passing it in.
 ///
-/// This allows formatting with non-String data.
+/// This allows formatting with non-`String` data.
 pub fn debug(
   in format_string: String,
   replace label: String,
