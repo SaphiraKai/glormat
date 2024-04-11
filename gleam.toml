@@ -1,7 +1,7 @@
 name = "glormat"
 version = "1.0.0"
 
-description = "A simple string formatting library for Gleam, using a readable builder pattern!"
+description = "A simple, readable string formatting library for Gleam!"
 licences = ["Apache-2.0"]
 repository = { type = "github", user = "SaphiraKai", repo = "glormat" }
 

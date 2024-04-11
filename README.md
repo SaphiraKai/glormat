@@ -1,5 +1,7 @@
 # glormat
 
+A simple, readable string formatting library for Gleam!
+
 [![Package Version](https://img.shields.io/hexpm/v/glormat)](https://hex.pm/packages/glormat)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/glormat/)
 
