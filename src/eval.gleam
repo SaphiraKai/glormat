@@ -77,8 +77,21 @@ pub fn format(
   replace label: String,
   with data: a,
 ) -> Result(String, parse.Error) {
-  case format_one(format_string, label, data) {
-    Ok(formatted) -> format(formatted, label, data)
-    Error(e) -> Error(e)
-  }
+  do_format(in: format_string, replace: label, with: data, at: 0)
+}
+
+fn do_format(
+  in format_string: String,
+  replace label: String,
+  with data: a,
+  at depth: Int,
+) -> Result(String, parse.Error) {
+  format_one(format_string, label, data)
+  |> result.then(do_format(_, label, data, depth + 1))
+  |> result.try_recover(fn(a) {
+    case a {
+      parse.MissingTarget if depth > 1 -> Ok(format_string)
+      _ -> Error(a)
+    }
+  })
 }
