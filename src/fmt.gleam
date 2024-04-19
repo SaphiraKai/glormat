@@ -1,23 +1,28 @@
-import gleam/result
-import gleam/string
-import parse
 import eval
+import gleam/dynamic
+import gleam/result
+import parse/data.{type Data}
+import parse/error.{type Error}
 
-// pub fn format(
-//   in format_string: String,
-//   replace label: String,
-//   with data: String,
-// ) -> Result(String, Nil) {
-//   let to_replace = "{" <> label <> "}"
-//   let contains_label =
-//     format_string
-//     |> string.contains(to_replace)
+pub fn with(from data: a) -> Result(Data, Error) {
+  let from = data.from(dynamic.from(data), _)
 
-//   case contains_label {
-//     True -> Ok(string.replace(in: format_string, each: to_replace, with: data))
-//     False -> Error(parse.MissingTarget)
-//   }
-// }
+  from(data.StringType)
+  |> result.lazy_or(fn() { from(data.IntType) })
+  |> result.lazy_or(fn() { from(data.FloatType) })
+}
+
+pub fn with_string(from data: String) -> Result(Data, Error) {
+  Ok(data.StringData(data))
+}
+
+pub fn with_int(from data: Int) -> Result(Data, Error) {
+  Ok(data.IntData(data))
+}
+
+pub fn with_float(from data: Float) -> Result(Data, Error) {
+  Ok(data.FloatData(data))
+}
 
 /// Replace all instances of `"{label}"` with `data` in the input string.
 ///
@@ -36,9 +41,11 @@ import eval
 pub fn format(
   in format_string: String,
   replace target: String,
-  with data: a,
-) -> Result(String, parse.Error) {
-  eval.format(in: format_string, replace: target, with: data)
+  with data: Result(Data, Error),
+) -> Result(String, Error) {
+  use data_ok <- result.try(data)
+
+  eval.format(in: format_string, replace: target, with: data_ok)
 }
 
 /// An alias for `format` that may lend more readable code.
@@ -53,18 +60,10 @@ pub fn format(
 pub fn replace(
   in format_string: String,
   replace target: String,
-  with data: a,
-) -> Result(String, parse.Error) {
+  with data: Result(Data, Error),
+) -> Result(String, Error) {
   format(in: format_string, replace: target, with: data)
 }
-
-// pub fn debug(
-//   in format_string: String,
-//   replace label: String,
-//   with data: a,
-// ) -> Result(String, parse.Error) {
-//   format(in: format_string, replace: label, with: string.inspect(data))
-// }
 
 /// A wrapper for `format` that calls `string.inspect` on `data` before passing it in.
 ///
@@ -80,20 +79,20 @@ pub fn replace(
 ///   |> then("question", with: "how are you")
 /// ```
 pub fn then(
-  in result: Result(String, parse.Error),
+  in format_string: Result(String, Error),
   replace target: String,
-  with data: String,
-) -> Result(String, parse.Error) {
-  fn(format_string) { format(in: format_string, replace: target, with: data) }
-  |> result.map(result, _)
-  |> result.flatten()
+  with data: Result(Data, Error),
+) -> Result(String, Error) {
+  use format_string_ok <- result.try(format_string)
+
+  format(in: format_string_ok, replace: target, with: data)
 }
 /// A wrapper for `then` that calls `string.inspect` on `data` before passing it in.
 /// This allows formatting with non-String data.
 // pub fn then_debug(
-//   in result: Result(String, parse.Error),
+//   in result: Result(String, Error),
 //   replace label: String,
 //   with data: a,
-// ) -> Result(String, parse.Error) {
+// ) -> Result(String, Error) {
 //   then(in: result, replace: label, with: string.inspect(data))
 // }

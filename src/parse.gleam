@@ -1,62 +1,48 @@
+import gleam/dynamic.{type Dynamic}
 import gleam/int
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
-import gleam/io
+import parse/data.{type Data}
+import parse/error.{type Error}
+import parse/format.{type Format, type Specifier, Format, Specifier}
 
-pub type Kind {
-  String
-  Int
-  Float
-}
+// fn braces(input: String) -> Result(String, Error) {
+//   let left_rest = string.split_once(input, "{")
+//   let inner_right = result.try(left_rest, fn(a) { string.split_once(a.1, "}") })
 
-pub type Specifier {
-  Specifier(kind: Kind, precision: Option(Int))
-}
-
-pub type Format {
-  Format(argument: Option(String), specifier: Specifier)
-}
-
-pub type Error {
-  InvalidKind
-  InvalidPrecision
-  InvalidTarget
-  MissingFormatSpecifier
-  MissingKind
-  MissingPrecision
-  MissingTarget
-}
-
-fn braces(input: String) -> Result(String, Error) {
-  let left_rest = string.split_once(input, "{")
-  let inner_right = result.try(left_rest, fn(a) { string.split_once(a.1, "}") })
-
-  case inner_right {
-    Ok(#(inner, _)) -> Ok(inner)
-    Error(_) -> Error(InvalidTarget)
-  }
-}
+//   case inner_right {
+//     Ok(#(inner, _)) -> Ok(inner)
+//     Error(_) -> Error(InvalidTarget)
+//   }
+// }
 
 pub fn left_target_right(
   input: String,
   label: String,
 ) -> Result(#(String, String, String), Error) {
+  let split_once = fn(a, b, e) {
+    string.split_once(a, b)
+    |> result.map_error(fn(_) { e })
+  }
+
   case label {
     "" -> {
-      use #(left, right) <- result.map(string.split_once(input, "{}"))
+      let left_right = split_once(input, "{}", error.MissingTarget)
+      use #(left, right) <- result.map(left_right)
 
       #(left, "", right)
     }
     _ -> {
-      let left_rest = string.split_once(input, "{" <> label)
+      let left_rest = split_once(input, "{" <> label, error.MissingTarget)
       use #(left, rest) <- result.then(left_rest)
-      use #(inner, right) <- result.map(string.split_once(rest, "}"))
 
-      #(left, label <> inner, right)
+      let specifier_right = split_once(rest, "}", error.InvalidTarget)
+      use #(specifier, right) <- result.map(specifier_right)
+
+      #(left, label <> specifier, right)
     }
   }
-  |> result.map_error(fn(_) { InvalidTarget })
 }
 
 fn precision(input: String) -> Result(Int, Error) {
@@ -65,54 +51,50 @@ fn precision(input: String) -> Result(Int, Error) {
   case left_precision {
     Ok(#(_, precision)) ->
       int.parse(precision)
-      |> result.map_error(fn(_) { InvalidPrecision })
-    Error(_) -> Error(MissingPrecision)
+      |> result.map_error(fn(_) { error.InvalidPrecision })
+    Error(_) -> Error(error.MissingPrecision)
   }
 }
 
-fn kind(input: String) -> Result(Kind, Error) {
-  let left_kind = string.split_once(input, "+")
+// fn kind(input: String) -> Result(Kind, Error) {
+//   let left_kind = string.split_once(input, "+")
 
-  case left_kind {
-    Ok(#(_, "s")) -> Ok(String)
-    Ok(#(_, "i")) -> Ok(Int)
-    Ok(#(_, "f")) -> Ok(Float)
-    Ok(#(_, _)) -> Error(InvalidKind)
-    _ -> Error(MissingKind)
-  }
-}
+//   case left_kind {
+//     Ok(#(_, "s")) -> Ok(String)
+//     Ok(#(_, "i")) -> Ok(Int)
+//     Ok(#(_, "f")) -> Ok(Float)
+//     Ok(#(_, _)) -> Error(InvalidKind)
+//     _ -> Error(MissingKind)
+//   }
+// }
 
 fn specifier(input: String) -> Result(Specifier, Error) {
-  let spec = Specifier(String, None)
+  let spec = Specifier(None)
 
-  let spec_kind = case kind(input) {
-    Ok(kind) -> Ok(Specifier(..spec, kind: kind))
-    Error(e) -> Error(e)
-  }
+  // let spec_kind = case kind(input) {
+  //   Ok(kind) -> Ok(Specifier(..spec, kind: kind))
+  //   Error(MissingKind) -> Ok(Specifier(..spec, kind: String))
+  //   Error(e) -> Error(e)
+  // }
+  // use spec <- result.then(spec_kind)
 
   let spec_precision = case precision(input) {
     Ok(precision) -> Ok(Specifier(..spec, precision: Some(precision)))
-    Error(MissingPrecision) -> Ok(Specifier(..spec, precision: None))
+    Error(error.MissingPrecision) -> Ok(Specifier(..spec, precision: None))
     Error(e) -> Error(e)
   }
+  use spec <- result.map(spec_precision)
 
-  spec_precision
+  spec
 }
 
 pub fn format(input: String) -> Result(Format, Error) {
-  let arg_spec =
+  let #(label, spec_string) =
     input
     |> string.split_once(":")
-    |> result.map_error(fn(_) { MissingFormatSpecifier })
+    |> result.unwrap(#(input, ""))
 
-  let arg_specifier = case arg_spec {
-    Ok(#(arg, spec)) -> Ok(#(arg, specifier(spec)))
-    Error(e) -> Error(e)
-  }
+  use specifier <- result.map(specifier(spec_string))
 
-  case arg_specifier {
-    Ok(#(arg, Ok(spec))) -> Ok(Format(string.to_option(arg), spec))
-    Ok(#(_, Error(e))) -> Error(e)
-    Error(e) -> Error(e)
-  }
+  Format(string.to_option(label), specifier)
 }

@@ -1,28 +1,36 @@
+import fmt
 import gleeunit
 import gleeunit/should
-import fmt
 import glormat.{assert_ok}
-import parse
 
 pub fn main() {
   gleeunit.main()
 }
 
 pub fn format_test() {
-  "1 left {object:} right"
-  |> fmt.format(replace: "object", with: "replaced")
+  "1 left {object} right"
+  |> fmt.format(replace: "object", with: fmt.with("replaced"))
   |> should.equal(Ok("1 left replaced right"))
-  // "2 {object}! hello {object} again"
-  // |> fmt.format(replace: "object", with: "world")
-  // |> should.equal(Ok("hello world! hello world again"))
 
-  // "3 {}"
-  // |> fmt.format(replace: "", with: "world")
-  // |> should.equal(Ok("hello world"))
+  "2 {}! hello {} again"
+  |> fmt.format(replace: "", with: fmt.with("world"))
+  |> should.equal(Ok("2 world! hello world again"))
 
-  // "4 {}"
-  // |> fmt.format(replace: "", with: "")
-  // |> should.equal(Ok("hello "))
+  "3 {result}"
+  |> fmt.format(replace: "result", with: fmt.with(1 + 2))
+  |> should.equal(Ok("3 3"))
+
+  "4 {result:.2}"
+  |> fmt.format(replace: "result", with: fmt.with(1.0 /. 3.0))
+  |> should.equal(Ok("4 0.33"))
+
+  "5 {result:.0}"
+  |> fmt.format(replace: "result", with: fmt.with(3.0 /. 2.0))
+  |> should.equal(Ok("5 1.0"))
+
+  "6 {result:.3}"
+  |> fmt.format(replace: "result", with: fmt.with(128_000))
+  |> should.equal(Ok("6 128"))
 }
 
 // pub fn debug_test() {
