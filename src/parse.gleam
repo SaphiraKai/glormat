@@ -1,9 +1,7 @@
-import gleam/dynamic.{type Dynamic}
 import gleam/int
-import gleam/option.{type Option, None, Some}
+import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
-import parse/data.{type Data}
 import parse/error.{type Error}
 import parse/format.{type Format, type Specifier, Format, Specifier}
 
