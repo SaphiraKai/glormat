@@ -3,7 +3,6 @@ pub type Error {
   InvalidPrecision
   InvalidTarget
   MissingFormatSpecifier
-  MissingKind
   MissingPrecision
   MissingTarget
 }
