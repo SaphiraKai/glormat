@@ -16,7 +16,7 @@ pub fn main() {
 
   "{left} {op} {right} = {result:.2}"
   |> fmt.replace("left", fmt.with(1.0))
-  |> fmt.then("op", fmt.with("/"))
+  |> fmt.then("op", fmt.with("/."))
   |> fmt.then("right", fmt.with(3.0))
   |> fmt.then("result", fmt.with(1.0 /. 3.0))
   |> assert_ok
